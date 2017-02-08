@@ -35,10 +35,9 @@ namespace NesTest
         public void RegisterIo(ushort addrStart, ushort addrEnd, Func<bool, ushort, byte, byte> callback)
         {
             if (addrStart > addrEnd) throw new InvalidOperationException();
-            while (addrStart <= addrEnd)
+            while (addrStart < addrEnd)
             {
-                ioMapping[addrStart] = callback;
-                addrStart++;
+                ioMapping[addrStart++] = callback;
             }
         }
 
@@ -120,14 +119,14 @@ namespace NesTest
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ushort GetAbsXAddr()
         {
-            ushort rt = (ushort)(NextByte() + (NextByte() << 8) + regs.Xr);
+            ushort rt = (ushort)((byte)(NextByte() + regs.Xr) + (NextByte() << 8));
             return GetAddr((byte)rt, (byte)(rt >> 8));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ushort GetAbsYAddr()
         {
-            ushort rt = (ushort)(NextByte() + (NextByte() << 8) + regs.Yr);
+            ushort rt = (ushort)((byte)(NextByte() + regs.Yr) + (NextByte() << 8));
             return GetAddr((byte)rt, (byte)(rt >> 8));
         }
 
@@ -388,7 +387,7 @@ namespace NesTest
                     break;
                 case Command.JmpInd:
                     var jmpAddr = GetAbsAddr();
-                    Jmp(GetAddr(GetByte(jmpAddr), GetByte((byte)(jmpAddr + 1))));
+                    Jmp(GetAddr(GetByte(jmpAddr), GetByte((ushort)(jmpAddr + 1))));
                     break;
                 case Command.Jsr:
                     Jsr(GetAbsAddr());
@@ -494,7 +493,7 @@ namespace NesTest
                     break;
                 case Command.Php:
                     regs.SetStatus(Status.Na);
-                    Push((byte)regs.Status);
+                    Push((byte)(regs.Status | Status.Brk));
                     break;
                 case Command.Pla:
                     regs.Ac = Pop();

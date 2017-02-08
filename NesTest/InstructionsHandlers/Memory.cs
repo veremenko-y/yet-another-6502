@@ -75,8 +75,6 @@ namespace NesTest
 
         private void Txs()
         {
-            regs.SetSign(regs.Xr);
-            regs.SetZero(regs.Xr);
             regs.Sp = regs.Xr;
         }
 

@@ -13,11 +13,15 @@ namespace NesTest
         public byte PcHigh;
         public byte Sp;
         public Status Status;
+        private bool BFlag;
 
         public override string ToString()
         {
-            return String.Format("A: {0:x2} Xr: {1:x2} Yr: {2:x2} Pc: {3:x2}{4:x2} Sp: {5} S: {6}", Ac, Xr, Yr, PcHigh,
-                PcLow, Sp, Convert.ToString((byte)Status, 2).PadLeft(8, '0'));
+            return String.Format("A: 0x{0:x2}(b{7}) Xr: 0x{1:x2} Yr: 0x{2:x2} Pc: 0x{3:x2}{4:x2} Sp: 0x{5} S: b{6}", 
+                Ac, Xr, Yr, PcHigh,
+                PcLow, Sp,
+                Convert.ToString((byte)Status, 2).PadLeft(8, '0'),
+                Convert.ToString((byte)Ac, 2).PadLeft(8, '0'));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -53,18 +57,21 @@ namespace NesTest
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetStatus(Status status)
         {
+            if (status == Status.Brk) BFlag = true;
             Status = Status | status;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ResetStatus(Status status)
         {
+            if (status == Status.Brk) BFlag = false;
             Status = Status & ~status;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsStatus(Status status)
         {
+            if(status == Status.Brk) return BFlag;
             return Status.HasFlag(status);
         }
 
