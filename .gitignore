@@ -30,6 +30,4 @@ _ReSharper*/
 .vs/
 #Nuget packages folder
 packages/
-NesTest/acme/*
-NesTest/as65/*
-NesTest/cc65/*
+Yv.Cpu.Mos6502/asms/*
