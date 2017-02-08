@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Forms.PropertyGridInternal;
 
 namespace NesTest
 {
@@ -83,6 +82,18 @@ namespace NesTest
             regs.SetSign(regs.Yr);
             regs.SetZero(regs.Yr);
             regs.Ac = regs.Yr;
+        }
+
+        private void Pla()
+        {
+            regs.Ac = Pop();
+            regs.SetZero(regs.Ac);
+            regs.SetSign(regs.Ac);
+        }
+
+        private void Pha()
+        {
+            Push(regs.Ac);
         }
     }
 }

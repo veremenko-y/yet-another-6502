@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Configuration;
 using System.Runtime.CompilerServices;
@@ -25,6 +26,20 @@ namespace NesTest
                 Status = Status.Na
             };
             ram = new byte[ushort.MaxValue + 1];
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static ushort Trace(ushort u, [CallerMemberName] string member = null)
+        {
+            Console.WriteLine("{1} {0:x4}", u, member);
+            return u;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static byte Trace(ushort u, byte b, [CallerMemberName] string member = null)
+        {
+            Console.WriteLine("{1} {0:x4}: {2:x2}", u, member, b);
+            return b;
         }
 
         public void RegisterIo(ushort addr, Func<bool, ushort, byte, byte> callback)
@@ -65,13 +80,13 @@ namespace NesTest
         private byte GetByte(ushort addr)
         {
             if (ioMapping.ContainsKey(addr)) return ioMapping[addr](false, addr, ram[addr]);
-            return ram[addr];
+            return Trace(addr, ram[addr]);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ushort GetAddr(byte low, byte high)
         {
-            return (ushort)(low + (high << 8));
+            return Trace((ushort)(low + (high << 8)));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -119,14 +134,14 @@ namespace NesTest
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ushort GetAbsXAddr()
         {
-            ushort rt = (ushort)((byte)(NextByte() + regs.Xr) + (NextByte() << 8));
+            ushort rt = (ushort)((byte)(NextByte()) + (NextByte() << 8) + regs.Xr);
             return GetAddr((byte)rt, (byte)(rt >> 8));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ushort GetAbsYAddr()
         {
-            ushort rt = (ushort)((byte)(NextByte() + regs.Yr) + (NextByte() << 8));
+            ushort rt = (ushort)((byte)(NextByte()) + (NextByte() << 8) + regs.Yr);
             return GetAddr((byte)rt, (byte)(rt >> 8));
         }
 
@@ -489,14 +504,14 @@ namespace NesTest
                     Ora(GetByte(GetZpXAddr()));
                     break;
                 case Command.Pha:
-                    Push(regs.Ac);
+                    Pha();
                     break;
                 case Command.Php:
                     regs.SetStatus(Status.Na);
                     Push((byte)(regs.Status | Status.Brk));
                     break;
                 case Command.Pla:
-                    regs.Ac = Pop();
+                    Pla();
                     break;
                 case Command.Plp:
                     regs.Status = (Status)Pop();
