@@ -9,10 +9,21 @@ namespace NesTest
         private static void Main(string[] args)
         {
             var cpu = new Cpu();
-            var rom = File.ReadAllBytes(@"..\..\6502_functional_test.bin");
+            //var rom = File.ReadAllBytes(@"..\..\6502_functional_test.bin");
+            var rom = File.ReadAllBytes(@"..\..\osi_bas.bin");
+            var ram = new byte[0x8000];
             //cpu.ram = rom;
-            cpu.RegisterIo(0x0, 0xffff, (write, addr, value) =>
+            cpu.RegisterIo(0x0000, 0x7fff, (write, addr, value) =>
             {
+                if (write)
+                {
+                    ram[addr] = value;
+                }
+                return ram[addr];
+            });
+            cpu.RegisterIo(0xC000, 0xffff, (write, addr, value) =>
+            {
+                addr = (ushort)(addr - 0xC000);
                 if (write)
                 {
                     rom[addr] = value;
@@ -23,16 +34,39 @@ namespace NesTest
                     return rom[addr];
                 }
             });
-            cpu.RegisterIo(0xf001, (write, addr, value) =>
+            cpu.RegisterIo(0xA000, (write, addr, value) =>
             {
-                Console.Write((char)value);
+                var res = !Console.KeyAvailable ? 0x01 : 0;
+                return (byte)(res | 0x02);
+            });
+            cpu.RegisterIo(0xA001, (write, addr, value) =>
+            {
+                if (write)
+                {
+                    Console.Write((char)value);
+                }
+                else
+                {
+                    while (!Console.KeyAvailable)
+                    {
+                        var key = Console.ReadKey(true);
+                        value = (byte)key.KeyChar;
+                        return value;
+                        //value = (byte)Console.Read();
+                    }
+                }
                 return value;
             });
-            cpu.RegisterIo(0xf004, (write, addr, value) =>
-            {
-                char c = (char)Console.Read();
-                return (byte)c;
-            });
+            //cpu.RegisterIo(0xf001, (write, addr, value) =>
+            //{
+            //    Console.Write((char)value);
+            //    return value;
+            //});
+            //cpu.RegisterIo(0xf004, (write, addr, value) =>
+            //{
+            //    char c = (char)Console.Read();
+            //    return (byte)c;
+            //});
             var traces = new Queue<string>();
             cpu.TraceCallback += (addr, value, member) =>
             {
@@ -64,22 +98,22 @@ namespace NesTest
                     Fail(cpu, traces);
                     break;
                 }
-                if (Console.KeyAvailable)
-                {
-                    var key = Console.ReadKey();
-                    if (key.Key == ConsoleKey.D1)
-                    {
-                        Fail(cpu, traces);
-                    }
-                    else if (key.Key == ConsoleKey.D2)
-                    {
-                        MemoryDump(cpu);
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
+                //if (Console.KeyAvailable)
+                //{
+                //    var key = Console.ReadKey();
+                //    if (key.Key == ConsoleKey.D1)
+                //    {
+                //        Fail(cpu, traces);
+                //    }
+                //    else if (key.Key == ConsoleKey.D2)
+                //    {
+                //        MemoryDump(cpu);
+                //    }
+                //    else
+                //    {
+                //        break;
+                //    }
+                //}
                 ushort pc = (ushort)((cpu.regs.PcHigh << 8) + cpu.regs.PcLow);
                 if (pc == 0x400)
                 {
