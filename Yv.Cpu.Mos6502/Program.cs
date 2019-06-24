@@ -1,24 +1,49 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Drawing;
 using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Timer = System.Threading.Timer;
 
 namespace NesTest
 {
-    static class Program
+    internal static class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             var cpu = new Cpu();
-            var rom = File.ReadAllBytes("6502_functional_test.bin");
+            var rom = File.ReadAllBytes(@"..\..\6502_functional_test.bin");
             //cpu.ram = rom;
-            //cpu.RegisterIo(0xff00, 0xffff, ConsoleOutput);
-            Array.Copy(rom, cpu.ram, rom.Length);
+            cpu.RegisterIo(0x0, 0xffff, (write, addr, value) =>
+            {
+                if (write)
+                {
+                    rom[addr] = value;
+                    return value;
+                }
+                else
+                {
+                    return rom[addr];
+                }
+            });
+            cpu.RegisterIo(0xf001, (write, addr, value) =>
+            {
+                Console.Write((char)value);
+                return value;
+            });
+            cpu.RegisterIo(0xf004, (write, addr, value) =>
+            {
+                char c = (char)Console.Read();
+                return (byte)c;
+            });
+            var traces = new Queue<string>();
+            cpu.TraceCallback += (addr, value, member) =>
+            {
+                var trace = string.Format("{0} {1:x4}: {2:x2}", member, addr, value);
+                //Console.WriteLine(trace);
+                traces.Enqueue(trace);
+                while (traces.Count > 128)
+                    traces.Dequeue();
+            };
+            //Array.Copy(rom, cpu.ram, rom.Length);
+
             cpu.regs.PcLow = 0x00;
             cpu.regs.PcHigh = 0x04;
             ushort prev = 0;
@@ -27,17 +52,40 @@ namespace NesTest
             {
                 var regs = cpu.regs.ToString();
                 cpu.Step();
-                //Console.Write("\t\t");
-                var command = string.Format("{0:x2} {1}", (byte)cpu.command, cpu.command);
-                Console.Write(command);
-                for (var tabs = command.Length / 4; 4 - tabs > 0; tabs++)
+                var command = "\t" + cpu.command.ToString();
+                for (var tabs = command.Length / 4; 3 - tabs > 0; tabs++)
                 {
-                    Console.Write("\t");
+                    command += "\t";
                 }
-
-                Console.WriteLine(regs);
-                if (Console.KeyAvailable) break;
+                command += " " + regs;
+                cpu.OnTraceCallback(0, (byte)cpu.command, command);
+                if ((byte)cpu.command == 0xFF)
+                {
+                    Fail(cpu, traces);
+                    break;
+                }
+                if (Console.KeyAvailable)
+                {
+                    var key = Console.ReadKey();
+                    if (key.Key == ConsoleKey.D1)
+                    {
+                        Fail(cpu, traces);
+                    }
+                    else if (key.Key == ConsoleKey.D2)
+                    {
+                        MemoryDump(cpu);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
                 ushort pc = (ushort)((cpu.regs.PcHigh << 8) + cpu.regs.PcLow);
+                if (pc == 0x400)
+                {
+                    Console.WriteLine("Success");
+                    break;
+                }
                 if (pc != prev)
                 {
                     prev = pc;
@@ -46,21 +94,41 @@ namespace NesTest
                 else
                 {
                     count++;
-                    if (count > 5)
+                    if (count > 3)
                     {
+                        Fail(cpu, traces);
                         Console.WriteLine("Trap break");
-                        var index = (cpu.regs.PcHigh << 8) + cpu.regs.PcLow;
-                        for (var i = index - 30; i < index; i++)
-                        {
-                            Console.Write("{0:x2} ", cpu.ram[i]);
-                            if ((i - index - 30) % 8 == 0) Console.WriteLine();
-                        }
                         break;
                     }
                 }
                 //Thread.Sleep(100);
             }
             Console.ReadLine();
+        }
+
+        private static void Fail(Cpu cpu, Queue<string> traces)
+        {
+            Console.WriteLine("--------------Dump-----------------");
+            while (traces.Count > 0)
+                Console.WriteLine(traces.Dequeue());
+            MemoryDump(cpu);
+            Console.WriteLine("-----------------------------------");
+        }
+
+        private static void MemoryDump(Cpu cpu)
+        {
+            Console.WriteLine("--------------Memory Dump----------");
+            for (var i = 0; i < 0x20; i++)
+            {
+                Console.Write("{0:x4}:", i * 0x10);
+                for (var j = 0; j < 0x10; j++)
+                {
+                    if (j == 8)
+                        Console.Write(" |");
+                    Console.Write(" {0:x2}", cpu.GetByte((ushort)(i * 0x10 + j)));
+                }
+                Console.WriteLine();
+            }
         }
 
         private static byte ConsoleOutput(bool write, ushort addr, byte val)

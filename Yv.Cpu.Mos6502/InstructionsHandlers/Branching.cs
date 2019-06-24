@@ -11,7 +11,7 @@ namespace NesTest
     {
         private void Bcc(byte op)
         {
-            if (!regs.IsStatus(Status.Carry))
+            if (!regs.Is(Status.Carry))
             {
                 ushort rt = GetRelAddr(op);
                 clock += regs.PcHigh != (byte) (rt >> 8) ? 2 : 1;
@@ -22,7 +22,7 @@ namespace NesTest
 
         private void Bcs(byte op)
         {
-            if (regs.IsStatus(Status.Carry))
+            if (regs.Is(Status.Carry))
             {
                 ushort rt = GetRelAddr(op);
                 clock += regs.PcHigh != (byte)(rt >> 8) ? 2 : 1;
@@ -33,7 +33,7 @@ namespace NesTest
 
         private void Beq(byte op)
         {
-            if (regs.IsStatus(Status.Zero))
+            if (regs.Is(Status.Zero))
             {
                 ushort rt = GetRelAddr(op);
                 clock += regs.PcHigh != (byte)(rt >> 8) ? 2 : 1;
@@ -44,7 +44,7 @@ namespace NesTest
 
         private void Bne(byte op)
         {
-            if (!regs.IsStatus(Status.Zero))
+            if (!regs.Is(Status.Zero))
             {
                 ushort rt = GetRelAddr(op);
                 clock += regs.PcHigh != (byte)(rt >> 8) ? 2 : 1;
@@ -55,7 +55,7 @@ namespace NesTest
 
         private void Bmi(byte op)
         {
-            if (regs.IsStatus(Status.Sign))
+            if (regs.Is(Status.Sign))
             {
                 ushort rt = GetRelAddr(op);
                 clock += regs.PcHigh != (byte)(rt >> 8) ? 2 : 1;
@@ -66,7 +66,7 @@ namespace NesTest
 
         private void Bpl(byte op)
         {
-            if (!regs.IsStatus(Status.Sign))
+            if (!regs.Is(Status.Sign))
             {
                 ushort rt = GetRelAddr(op);
                 clock += regs.PcHigh != (byte)(rt >> 8) ? 2 : 1;
@@ -77,7 +77,7 @@ namespace NesTest
 
         private void Bvc(byte op)
         {
-            if (!regs.IsStatus(Status.VOverflow))
+            if (!regs.Is(Status.VOverflow))
             {
                 ushort rt = GetRelAddr(op);
                 clock += regs.PcHigh != (byte)(rt >> 8) ? 2 : 1;
@@ -88,7 +88,7 @@ namespace NesTest
 
         private void Bvs(byte op)
         {
-            if (regs.IsStatus(Status.VOverflow))
+            if (regs.Is(Status.VOverflow))
             {
                 ushort rt = GetRelAddr(op);
                 clock += regs.PcHigh != (byte)(rt >> 8) ? 2 : 1;

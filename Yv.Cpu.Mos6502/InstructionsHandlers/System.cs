@@ -15,8 +15,7 @@ namespace NesTest
             regs.PcAdd(1);
             Push(regs.PcHigh);
             Push(regs.PcLow);
-            regs.SetBreak(true);
-            Push((byte)regs.Status);
+            Php();
             regs.SetInterrupt(true);
             regs.PcLow = GetByte(0xFE, 0xFF);
             regs.PcHigh = GetByte(0xFF, 0xFF);

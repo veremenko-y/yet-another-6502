@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 
 namespace NesTest
 {
+    public delegate void TraceCallback(ushort address, byte value, string source);
+
     public partial class Cpu
     {
         public Registers regs;
@@ -17,6 +19,8 @@ namespace NesTest
         public Command command;
 
         private Dictionary<ushort, Func<bool, ushort, byte, byte>> ioMapping = new Dictionary<ushort, Func<bool, ushort, byte, byte>>();
+
+        public event TraceCallback TraceCallback;
 
         public Cpu()
         {
@@ -29,17 +33,23 @@ namespace NesTest
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static ushort Trace(ushort u, [CallerMemberName] string member = null)
+        private ushort Trace(ushort addr, [CallerMemberName] string member = null)
         {
-            Console.WriteLine("{1} {0:x4}", u, member);
-            return u;
+            OnTraceCallback(addr, 0, member);
+            return addr;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static byte Trace(ushort u, byte b, [CallerMemberName] string member = null)
+        private byte Trace(ushort addr, byte value, [CallerMemberName] string member = null)
         {
-            Console.WriteLine("{1} {0:x4}: {2:x2}", u, member, b);
-            return b;
+            OnTraceCallback(addr, value, member);
+            return value;
+        }
+
+        // make me private
+        internal void OnTraceCallback(ushort addr, byte value, string source)
+        {
+            TraceCallback?.Invoke(addr, value, source);
         }
 
         public void RegisterIo(ushort addr, Func<bool, ushort, byte, byte> callback)
@@ -50,9 +60,10 @@ namespace NesTest
         public void RegisterIo(ushort addrStart, ushort addrEnd, Func<bool, ushort, byte, byte> callback)
         {
             if (addrStart > addrEnd) throw new InvalidOperationException();
-            while (addrStart < addrEnd)
+            int addr = addrStart;
+            while (addr <= addrEnd)
             {
-                ioMapping[addrStart++] = callback;
+                ioMapping[(ushort)addr++] = callback;
             }
         }
 
@@ -71,16 +82,22 @@ namespace NesTest
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private byte GetByte(byte low, byte high)
+        // Make me private
+        public byte GetByte(byte low, byte high)
         {
             return GetByte((ushort)(low + (high << 8)));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private byte GetByte(ushort addr)
+        // Make me private
+        public byte GetByte(ushort addr)
         {
-            if (ioMapping.ContainsKey(addr)) return ioMapping[addr](false, addr, ram[addr]);
-            return Trace(addr, ram[addr]);
+            byte value;
+            if (ioMapping.ContainsKey(addr))
+                value = ioMapping[addr](false, addr, ram[addr]);
+            else
+                value = ram[addr];
+            return Trace(addr, value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -134,14 +151,14 @@ namespace NesTest
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ushort GetAbsXAddr()
         {
-            ushort rt = (ushort)((byte)(NextByte()) + (NextByte() << 8) + regs.Xr);
+            ushort rt = (ushort)(NextByte() + (NextByte() << 8) + regs.Xr);
             return GetAddr((byte)rt, (byte)(rt >> 8));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ushort GetAbsYAddr()
         {
-            ushort rt = (ushort)((byte)(NextByte()) + (NextByte() << 8) + regs.Yr);
+            ushort rt = (ushort)(NextByte() + (NextByte() << 8) + regs.Yr);
             return GetAddr((byte)rt, (byte)(rt >> 8));
         }
 
@@ -149,6 +166,7 @@ namespace NesTest
         private ushort GetPreIndXAddr()
         {
             ushort rt = (ushort)(NextByte() + regs.Xr);
+            rt = (ushort)(rt & 0x00FF); // wraparound;
             return GetAddr(
                 GetByte((byte)rt, (byte)(rt >> 8)),
                 GetByte((byte)(rt + 1), (byte)((rt + 1) >> 8)));
@@ -284,16 +302,16 @@ namespace NesTest
                     Bvs(NextByte());
                     break;
                 case Command.Clc:
-                    regs.ResetStatus(Status.Carry);
+                    regs.Reset(Status.Carry);
                     break;
                 case Command.Cld:
-                    regs.ResetStatus(Status.Decimal);
+                    regs.Reset(Status.Decimal);
                     break;
                 case Command.Cli:
-                    regs.ResetStatus(Status.Interrupt);
+                    regs.Reset(Status.Interrupt);
                     break;
                 case Command.Clv:
-                    regs.ResetStatus(Status.VOverflow);
+                    regs.Reset(Status.VOverflow);
                     break;
                 case Command.CmpIndY:
                     Cmp(GetByte(GetPostIndYAddr()));
@@ -507,15 +525,13 @@ namespace NesTest
                     Pha();
                     break;
                 case Command.Php:
-                    regs.SetStatus(Status.Na);
-                    Push((byte)(regs.Status | Status.Brk));
+                    Php();
                     break;
                 case Command.Pla:
                     Pla();
                     break;
                 case Command.Plp:
                     regs.Status = (Status)Pop();
-                    regs.SetStatus(Status.Na);
                     break;
                 case Command.RolAbs:
                     Rol(GetAbsAddr());
@@ -533,10 +549,10 @@ namespace NesTest
                     Rol(GetZpXAddr());
                     break;
                 case Command.RorAbs:
-                    Rol(GetAbsAddr());
+                    Ror(GetAbsAddr());
                     break;
                 case Command.RorAbsX:
-                    Rol(GetAbsXAddr());
+                    Ror(GetAbsXAddr());
                     break;
                 case Command.RorAcc:
                     Ror();
@@ -581,7 +597,7 @@ namespace NesTest
                     regs.SetCarry(true);
                     break;
                 case Command.Sed:
-                    regs.SetStatus(Status.Decimal);
+                    regs.Set(Status.Decimal);
                     break;
                 case Command.Sei:
                     regs.SetInterrupt(true);

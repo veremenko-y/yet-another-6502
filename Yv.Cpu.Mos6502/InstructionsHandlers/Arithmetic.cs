@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace NesTest
 {
@@ -10,9 +6,9 @@ namespace NesTest
     {
         private void Add(byte op)
         {
-            ushort rt = (ushort)(regs.Ac + op + (regs.IsStatus(Status.Carry) ? 1 : 0));
+            ushort rt = (ushort)(regs.Ac + op + (regs.Is(Status.Carry) ? 1 : 0));
             regs.SetZero((byte)(rt & 0xFF));
-            if (regs.IsStatus(Status.Decimal))
+            if (regs.Is(Status.Decimal))
             {
                 throw new NotImplementedException();
             }
@@ -27,16 +23,16 @@ namespace NesTest
 
         private void Sbc(byte op)
         {
-            ushort rt = (ushort)(regs.Ac - op - (regs.IsStatus(Status.Carry) ? 1 : 0));
+            ushort rt = (ushort)(regs.Ac - op - (!regs.Is(Status.Carry) ? 1 : 0));
             regs.SetSign(rt);
             regs.SetZero((byte)rt);
             regs.SetOverflow(((regs.Ac ^ op) & 0x80) != 0 && (((regs.Ac ^ (byte)rt) & 0x80) != 0));
-            if (regs.IsStatus(Status.Decimal))
+            if (regs.Is(Status.Decimal))
             {
                 throw new NotImplementedException();
             }
             regs.SetCarry(rt < 0x100);
-            regs.Ac = (byte) rt;
+            regs.Ac = (byte)rt;
         }
 
         private void Inc(ushort addr)
@@ -89,7 +85,7 @@ namespace NesTest
             regs.SetSign(rt);
             regs.SetZero(rt);
             regs.SetCarry(rt);
-            SetByte(regs.Ac, (byte)rt);
+            regs.Ac = (byte)rt;
         }
 
         private void Asl(ushort addr)
@@ -124,10 +120,10 @@ namespace NesTest
 
         private void Rol()
         {
-            ushort rt = (ushort) (regs.Ac << 1);
-            if (regs.IsStatus(Status.Carry))
+            ushort rt = (ushort)(regs.Ac << 1);
+            if (regs.Is(Status.Carry))
             {
-                rt = (ushort) (rt | 0x01);
+                rt = (ushort)(rt | 0x01);
             }
             regs.SetCarry(rt);
             regs.Ac = (byte)rt;
@@ -139,7 +135,7 @@ namespace NesTest
         {
             var op = GetByte(addr);
             ushort rt = (ushort)(op << 1);
-            if (regs.IsStatus(Status.Carry))
+            if (regs.Is(Status.Carry))
             {
                 rt = (ushort)(rt | 0x01);
             }
@@ -153,7 +149,7 @@ namespace NesTest
         private void Ror()
         {
             ushort rt = regs.Ac;
-            if (regs.IsStatus(Status.Carry))
+            if (regs.Is(Status.Carry))
             {
                 rt = (ushort)(rt | 0x100);
             }
@@ -168,30 +164,23 @@ namespace NesTest
         {
             var op = GetByte(addr);
             ushort rt = op;
-            if (regs.IsStatus(Status.Carry))
+            if (regs.Is(Status.Carry))
             {
                 rt = (ushort)(rt | 0x100);
             }
             regs.SetCarry((rt & 0x01) != 0);
             rt = (ushort)(rt >> 1);
-            regs.Ac = (byte)rt;
-            regs.SetSign(op);
-            regs.SetZero(op);
-            SetByte(addr, op);
+            regs.SetSign(rt);
+            regs.SetZero(rt);
+            SetByte(addr, (byte)rt);
         }
 
         private void Bit(byte op)
         {
-            op = (byte) (regs.Ac & op);
-            if (op == 0)
-            {
-                regs.SetZero(0);
-            }
-            else
-            {
-                regs.SetSign(op);
-                regs.SetOverflow((op & 0x40) != 0);
-            }
+            var rt = (byte)(regs.Ac & op);
+            regs.SetZero(rt);
+            regs.SetSign(op);
+            regs.SetOverflow((op & 0x40) != 0);
         }
     }
 }

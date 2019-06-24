@@ -95,5 +95,11 @@ namespace NesTest
         {
             Push(regs.Ac);
         }
+
+        private void Php()
+        {
+            regs.Set(Status.Na);
+            Push((byte)(regs.Status | Status.Brk));
+        }
     }
 }

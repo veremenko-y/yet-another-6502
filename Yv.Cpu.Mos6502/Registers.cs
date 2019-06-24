@@ -17,7 +17,7 @@ namespace NesTest
 
         public override string ToString()
         {
-            return String.Format("A: 0x{0:x2}(b{7}) Xr: 0x{1:x2} Yr: 0x{2:x2} Pc: 0x{3:x2}{4:x2} Sp: 0x{5} S: b{6}", 
+            return String.Format("A: 0x{0:x2}(b{7}) Xr: 0x{1:x2} Yr: 0x{2:x2} Pc: 0x{3:x2}{4:x2} Sp: 0x{5} S: b{6}",
                 Ac, Xr, Yr, PcHigh,
                 PcLow, Sp,
                 Convert.ToString((byte)Status, 2).PadLeft(8, '0'),
@@ -55,21 +55,21 @@ namespace NesTest
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetStatus(Status status)
+        public void Set(Status status)
         {
             if (status == Status.Brk) BFlag = true;
             Status = Status | status;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ResetStatus(Status status)
+        public void Reset(Status status)
         {
             if (status == Status.Brk) BFlag = false;
             Status = Status & ~status;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsStatus(Status status)
+        public bool Is(Status status)
         {
             if(status == Status.Brk) return BFlag;
             return Status.HasFlag(status);
@@ -80,11 +80,11 @@ namespace NesTest
         {
             if (((byte)rt & 0X80) != 0)
             {
-                SetStatus(Status.Sign);
+                Set(Status.Sign);
             }
             else
             {
-                ResetStatus(Status.Sign);
+                Reset(Status.Sign);
             }
         }
 
@@ -93,11 +93,11 @@ namespace NesTest
         {
             if (condition)
             {
-                SetStatus(Status.VOverflow);
+                Set(Status.VOverflow);
             }
             else
             {
-                ResetStatus(Status.VOverflow);
+                Reset(Status.VOverflow);
             }
         }
 
@@ -112,11 +112,11 @@ namespace NesTest
         {
             if (condition)
             {
-                SetStatus(Status.Carry);
+                Set(Status.Carry);
             }
             else
             {
-                ResetStatus(Status.Carry);
+                Reset(Status.Carry);
             }
         }
 
@@ -125,11 +125,11 @@ namespace NesTest
         {
             if (condition)
             {
-                SetStatus(Status.Brk);
+                Set(Status.Brk);
             }
             else
             {
-                ResetStatus(Status.Brk);
+                Reset(Status.Brk);
             }
         }
 
@@ -138,11 +138,11 @@ namespace NesTest
         {
             if (condition)
             {
-                SetStatus(Status.Interrupt);
+                Set(Status.Interrupt);
             }
             else
             {
-                ResetStatus(Status.Interrupt);
+                Reset(Status.Interrupt);
             }
         }
 
@@ -151,11 +151,11 @@ namespace NesTest
         {
             if ((byte)op == 0)
             {
-                SetStatus(Status.Zero);
+                Set(Status.Zero);
             }
             else
             {
-                ResetStatus(Status.Zero);
+                Reset(Status.Zero);
             }
         }
     }
