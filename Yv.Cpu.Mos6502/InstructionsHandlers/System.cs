@@ -9,6 +9,12 @@ namespace NesTest
 {
     public partial class Cpu
     {
+        public void Reset()
+        {
+            regs.PcLow = GetByte(0xFC, 0xFF);
+            regs.PcHigh = GetByte(0xFD, 0xFF);
+        }
+
         private void Brk()
         {
             clock += 7;

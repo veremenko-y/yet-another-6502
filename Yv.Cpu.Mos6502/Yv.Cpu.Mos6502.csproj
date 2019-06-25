@@ -9,8 +9,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Yv.Cpu.Mos6502</RootNamespace>
     <AssemblyName>Yv.Cpu.Mos6502</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -48,6 +49,8 @@
   <ItemGroup>
     <Compile Include="Commands.cs" />
     <Compile Include="Cpu.cs" />
+    <Compile Include="Implementations\GrantsSimple6502.cs" />
+    <Compile Include="Implementations\TestMachine.cs" />
     <Compile Include="InstructionsHandlers\Logic.cs" />
     <Compile Include="InstructionsHandlers\Comparation.cs" />
     <Compile Include="InstructionsHandlers\Branching.cs" />

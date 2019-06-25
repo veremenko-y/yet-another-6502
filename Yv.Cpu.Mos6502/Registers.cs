@@ -15,9 +15,16 @@ namespace NesTest
         public Status Status;
         private bool BFlag;
 
+        public ushort Pc
+        {
+            get => (ushort)(PcHigh << 8 | PcLow);
+            set { PcLow = (byte)value; PcHigh = (byte)(value >> 8); }
+        }
+
+
         public override string ToString()
         {
-            return String.Format("A: 0x{0:x2}(b{7}) Xr: 0x{1:x2} Yr: 0x{2:x2} Pc: 0x{3:x2}{4:x2} Sp: 0x{5} S: b{6}",
+            return string.Format("A: 0x{0:x2}(b{7}) Xr: 0x{1:x2} Yr: 0x{2:x2} Pc: 0x{3:x2}{4:x2} Sp: 0x{5} S: b{6}",
                 Ac, Xr, Yr, PcHigh,
                 PcLow, Sp,
                 Convert.ToString((byte)Status, 2).PadLeft(8, '0'),
@@ -25,7 +32,7 @@ namespace NesTest
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void PcAdd(byte op)
+        internal void PcAdd(byte op)
         {
             ushort rt = (ushort)(PcLow + op);
             if (rt > 0xFF)
@@ -40,7 +47,7 @@ namespace NesTest
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void PcSub(byte op)
+        internal void PcSub(byte op)
         {
             ushort rt = (ushort)(PcLow - op);
             if (rt > 0xFF)
@@ -55,28 +62,28 @@ namespace NesTest
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Set(Status status)
+        internal void Set(Status status)
         {
             if (status == Status.Brk) BFlag = true;
             Status = Status | status;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Reset(Status status)
+        internal void Reset(Status status)
         {
             if (status == Status.Brk) BFlag = false;
             Status = Status & ~status;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Is(Status status)
+        internal bool Is(Status status)
         {
             if(status == Status.Brk) return BFlag;
-            return Status.HasFlag(status);
+            return (Status & status) > 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetSign(ushort rt)
+        internal void SetSign(ushort rt)
         {
             if (((byte)rt & 0X80) != 0)
             {
@@ -89,7 +96,7 @@ namespace NesTest
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetOverflow(bool condition)
+        internal void SetOverflow(bool condition)
         {
             if (condition)
             {
@@ -102,13 +109,13 @@ namespace NesTest
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetCarry(ushort rt)
+        internal void SetCarry(ushort rt)
         {
             SetCarry(rt > 0xFF);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetCarry(bool condition)
+        internal void SetCarry(bool condition)
         {
             if (condition)
             {
@@ -121,7 +128,7 @@ namespace NesTest
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetBreak(bool condition)
+        internal void SetBreak(bool condition)
         {
             if (condition)
             {
@@ -134,7 +141,7 @@ namespace NesTest
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetInterrupt(bool condition)
+        internal void SetInterrupt(bool condition)
         {
             if (condition)
             {
@@ -147,7 +154,7 @@ namespace NesTest
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetZero(ushort op)
+        internal void SetZero(ushort op)
         {
             if ((byte)op == 0)
             {

@@ -1,26 +1,39 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Net.Configuration;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace NesTest
 {
-    public delegate void TraceCallback(ushort address, byte value, string source);
+    //public delegate void IoEvent(object sender, IoEventArgs e);
+
+    //public class IoEventArgs
+    //{
+    //    private bool read;
+    //    public bool Read { get => read; }
+    //    public bool Write { get => !read; }
+    //    public ushort Address { get; set; }
+    //    public byte Value { get; set; }
+
+    //    public IoEventArgs(bool read, ushort address, byte value)
+    //    {
+    //        this.read = read;
+    //        Address = address;
+    //        Value = value;
+    //    }
+
+    //    public IoEventArgs(bool read, ushort address)
+    //    {
+    //        this.read;
+    //    }
+    //}
 
     public partial class Cpu
     {
         public Registers regs;
-        public byte[] ram;
         public int clock;
         public Command command;
 
         private Dictionary<ushort, Func<bool, ushort, byte, byte>> ioMapping = new Dictionary<ushort, Func<bool, ushort, byte, byte>>();
-
-        public event TraceCallback TraceCallback;
 
         public Cpu()
         {
@@ -29,27 +42,6 @@ namespace NesTest
             {
                 Status = Status.Na
             };
-            ram = new byte[ushort.MaxValue + 1];
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ushort Trace(ushort addr, [CallerMemberName] string member = null)
-        {
-            OnTraceCallback(addr, 0, member);
-            return addr;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private byte Trace(ushort addr, byte value, [CallerMemberName] string member = null)
-        {
-            OnTraceCallback(addr, value, member);
-            return value;
-        }
-
-        // make me private
-        internal void OnTraceCallback(ushort addr, byte value, string source)
-        {
-            TraceCallback?.Invoke(addr, value, source);
         }
 
         public void RegisterIo(ushort addr, Func<bool, ushort, byte, byte> callback)
@@ -82,28 +74,26 @@ namespace NesTest
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        // Make me private
-        public byte GetByte(byte low, byte high)
+        protected byte GetByte(byte low, byte high)
         {
             return GetByte((ushort)(low + (high << 8)));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        // Make me private
-        public byte GetByte(ushort addr)
+        protected byte GetByte(ushort addr)
         {
             byte value;
             if (ioMapping.ContainsKey(addr))
-                value = ioMapping[addr](false, addr, ram[addr]);
+                value = ioMapping[addr](false, addr, 0);
             else
-                value = ram[addr];
-            return Trace(addr, value);
+                value = 0;
+            return value;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ushort GetAddr(byte low, byte high)
         {
-            return Trace((ushort)(low + (high << 8)));
+            return (ushort)(low + (high << 8));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -115,7 +105,6 @@ namespace NesTest
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SetByte(ushort addr, byte val)
         {
-            ram[addr] = val;
             if (ioMapping.ContainsKey(addr))
             {
                 ioMapping[addr](true, addr, val);
