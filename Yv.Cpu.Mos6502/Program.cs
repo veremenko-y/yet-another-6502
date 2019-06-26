@@ -10,9 +10,9 @@ namespace NesTest
         {
             var argsParser = new Options("Yv.Cpu.Most6502");
             argsParser.AddOption(new[] { "m", "machine" }, values: new[] { "test", "grants" }, description: "Machine name to be run");
-            //if (!argsParser.Parse(args))
-            //    return;
-            var machine = "test"; argsParser.Get("m");
+            if (!argsParser.Parse(args))
+                return;
+            var machine = argsParser.Get("m");
             if (machine == "grants")
             {
                 var rom = File.ReadAllBytes(@"..\..\osi_bas.bin");
@@ -28,16 +28,10 @@ namespace NesTest
                 // use the tests with the report enabled
                 var rom = File.ReadAllBytes(@"..\..\6502_functional_test.bin");
                 var testMachine = new TestMachine(rom);
-                // Before: 00:00:06.1502717
-                var sw = new Stopwatch();
-                sw.Start();
                 while (testMachine.Running)
                 {
                     testMachine.Step();
                 }
-                sw.Stop();
-                Console.WriteLine();
-                Console.WriteLine("Test finished {0}", sw.Elapsed);
             }
             else
             {

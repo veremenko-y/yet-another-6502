@@ -13,7 +13,7 @@ namespace NesTest
             RegisterIo(0x0000, 0x7fff, (ref IoEventArgs e) =>
             {
                 if (e.IsWrite)
-                { 
+                {
                     ram[e.Address] = e.Value;
                 }
                 e.Value = ram[e.Address];
@@ -32,7 +32,7 @@ namespace NesTest
             });
             RegisterIo(0xA000, (ref IoEventArgs e) =>
             {
-                var res = hasKey ? 0x01 : 0;
+                var res = Console.KeyAvailable ? 0x01 : 0;
                 e.Value = (byte)(res | 0x02);
             });
             RegisterIo(0xA001, (ref IoEventArgs e) =>
@@ -44,18 +44,13 @@ namespace NesTest
                 else
                 {
                     hasKey = false;
-                    e.Value = (byte)inputKey;
+                    e.Value = (byte)Console.ReadKey(true).KeyChar;
                 }
             });
         }
 
         public new void Step()
         {
-            if (Console.KeyAvailable)
-            {
-                hasKey = true;
-                inputKey = Console.ReadKey(true).KeyChar;
-            }
             base.Step();
         }
     }

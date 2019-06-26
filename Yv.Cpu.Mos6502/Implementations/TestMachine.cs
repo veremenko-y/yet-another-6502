@@ -30,13 +30,11 @@ namespace NesTest
             RegisterIo(0xf001, (ref IoEventArgs e) =>
             {
                 Console.Write((char)e.Value);
-                if ((char)e.Value == 'R')
-                    Running = false;
             });
             RegisterIo(0xf004, (ref IoEventArgs e) =>
             {
-                //char c = (char)Console.Read();
-                //e.Value = (byte)c;
+                char c = Console.ReadKey().KeyChar;
+                e.Value = (byte)c;
             });
             regs.Pc = 0x0400;
         }
