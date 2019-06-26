@@ -10,44 +10,42 @@ namespace NesTest
         public GrantsSimple6502(byte[] rom)
         {
             var ram = new byte[0x8000];
-            RegisterIo(0x0000, 0x7fff, (write, addr, value) =>
+            RegisterIo(0x0000, 0x7fff, (ref IoEventArgs e) =>
             {
-                if (write)
-                {
-                    ram[addr] = value;
+                if (e.IsWrite)
+                { 
+                    ram[e.Address] = e.Value;
                 }
-                return ram[addr];
+                e.Value = ram[e.Address];
             });
-            RegisterIo(0xC000, 0xffff, (write, addr, value) =>
+            RegisterIo(0xC000, 0xffff, (ref IoEventArgs e) =>
             {
-                addr = (ushort)(addr - 0xC000);
-                if (write)
+                var addr = (ushort)(e.Address - 0xC000);
+                if (e.IsWrite)
                 {
-                    rom[addr] = value;
-                    return value;
+                    rom[addr] = e.Value;
                 }
                 else
                 {
-                    return rom[addr];
+                    e.Value = rom[addr];
                 }
             });
-            RegisterIo(0xA000, (write, addr, value) =>
+            RegisterIo(0xA000, (ref IoEventArgs e) =>
             {
                 var res = hasKey ? 0x01 : 0;
-                return (byte)(res | 0x02);
+                e.Value = (byte)(res | 0x02);
             });
-            RegisterIo(0xA001, (write, addr, value) =>
+            RegisterIo(0xA001, (ref IoEventArgs e) =>
             {
-                if (write)
+                if (e.IsWrite)
                 {
-                    Console.Write((char)value);
+                    Console.Write((char)e.Value);
                 }
                 else
                 {
                     hasKey = false;
-                    value = (byte)inputKey;
+                    e.Value = (byte)inputKey;
                 }
-                return value;
             });
         }
 

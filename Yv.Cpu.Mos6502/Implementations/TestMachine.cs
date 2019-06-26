@@ -16,27 +16,27 @@ namespace NesTest
         public TestMachine(byte[] rom)
         {
             Running = true;
-            RegisterIo(0x0000, 0xffff, (write, addr, value) =>
+            RegisterIo(0x0000, 0xffff, (ref IoEventArgs e) =>
             {
-                if (write)
+                if (e.IsWrite)
                 {
-                    rom[addr] = value;
-                    return value;
+                    rom[e.Address] = e.Value;
                 }
                 else
                 {
-                    return rom[addr];
+                    e.Value = rom[e.Address];
                 }
             });
-            RegisterIo(0xf001, (write, addr, value) =>
+            RegisterIo(0xf001, (ref IoEventArgs e) =>
             {
-                Console.Write((char)value);
-                return value;
+                Console.Write((char)e.Value);
+                if ((char)e.Value == 'R')
+                    Running = false;
             });
-            RegisterIo(0xf004, (write, addr, value) =>
+            RegisterIo(0xf004, (ref IoEventArgs e) =>
             {
-                char c = (char)Console.Read();
-                return (byte)c;
+                //char c = (char)Console.Read();
+                //e.Value = (byte)c;
             });
             regs.Pc = 0x0400;
         }

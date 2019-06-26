@@ -4,28 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace NesTest
 {
-    //public delegate void IoEvent(object sender, IoEventArgs e);
-
-    //public class IoEventArgs
-    //{
-    //    private bool read;
-    //    public bool Read { get => read; }
-    //    public bool Write { get => !read; }
-    //    public ushort Address { get; set; }
-    //    public byte Value { get; set; }
-
-    //    public IoEventArgs(bool read, ushort address, byte value)
-    //    {
-    //        this.read = read;
-    //        Address = address;
-    //        Value = value;
-    //    }
-
-    //    public IoEventArgs(bool read, ushort address)
-    //    {
-    //        this.read;
-    //    }
-    //}
+    public delegate void IoEvent(ref IoEventArgs e);
 
     public partial class Cpu
     {
@@ -33,7 +12,7 @@ namespace NesTest
         public int clock;
         public Command command;
 
-        private Dictionary<ushort, Func<bool, ushort, byte, byte>> ioMapping = new Dictionary<ushort, Func<bool, ushort, byte, byte>>();
+        private List<IoMapping> ioMapping = new List<IoMapping>();
 
         public Cpu()
         {
@@ -44,19 +23,16 @@ namespace NesTest
             };
         }
 
-        public void RegisterIo(ushort addr, Func<bool, ushort, byte, byte> callback)
+        public void RegisterIo(ushort addr, IoEvent handler)
         {
-            ioMapping[addr] = callback;
+            ioMapping.Add(new IoMapping(addr, addr, handler));
         }
 
-        public void RegisterIo(ushort addrStart, ushort addrEnd, Func<bool, ushort, byte, byte> callback)
+        public void RegisterIo(ushort addrStart, ushort addrEnd, IoEvent handler)
         {
-            if (addrStart > addrEnd) throw new InvalidOperationException();
-            int addr = addrStart;
-            while (addr <= addrEnd)
-            {
-                ioMapping[(ushort)addr++] = callback;
-            }
+            if (addrStart > addrEnd)
+                throw new InvalidOperationException();
+            ioMapping.Add(new IoMapping(addrStart, addrEnd, handler));
         }
 
         public void Step()
@@ -80,14 +56,21 @@ namespace NesTest
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected byte GetByte(ushort addr)
+        protected byte GetByte(ushort address)
         {
-            byte value;
-            if (ioMapping.ContainsKey(addr))
-                value = ioMapping[addr](false, addr, 0);
-            else
-                value = 0;
-            return value;
+            for (var i = 0; i < ioMapping.Count; i++)
+            {
+                var mapping = ioMapping[i];
+                if (!mapping.IsInRange(address))
+                    continue;
+                var e = IoEventArgs.Read(address);
+                mapping.Handler(ref e);
+                if (e.ReadSuccess)
+                {
+                    return e.Value;
+                }
+            }
+            return 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -103,11 +86,15 @@ namespace NesTest
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void SetByte(ushort addr, byte val)
+        private void SetByte(ushort address, byte value)
         {
-            if (ioMapping.ContainsKey(addr))
+            for (var i = 0; i < ioMapping.Count; i++)
             {
-                ioMapping[addr](true, addr, val);
+                var mapping = ioMapping[i];
+                if (!mapping.IsInRange(address))
+                    continue;
+                var e = IoEventArgs.Write(address, value);
+                mapping.Handler(ref e);
             }
         }
 

@@ -57,6 +57,9 @@
     <Compile Include="InstructionsHandlers\Memory.cs" />
     <Compile Include="InstructionsHandlers\System.cs" />
     <Compile Include="InstructionsHandlers\Arithmetic.cs" />
+    <Compile Include="IoEventArgs.cs" />
+    <Compile Include="IoMapping.cs" />
+    <Compile Include="Options.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Registers.cs" />
