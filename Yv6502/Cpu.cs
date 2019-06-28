@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace NesTest
+namespace Yv6502
 {
     public delegate void IoEvent(ref IoEventArgs e);
 

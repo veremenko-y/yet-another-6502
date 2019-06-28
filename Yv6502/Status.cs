@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace NesTest
+namespace Yv6502
 {
     [Flags]
     public enum Status

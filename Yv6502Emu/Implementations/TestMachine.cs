@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Yv6502;
 
-namespace NesTest
+namespace Yv6502Emu
 {
     class TestMachine : Cpu
     {

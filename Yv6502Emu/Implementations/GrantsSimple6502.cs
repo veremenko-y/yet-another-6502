@@ -1,6 +1,7 @@
 ﻿using System;
+using Yv6502;
 
-namespace NesTest
+namespace Yv6502Emu
 {
     public class GrantsSimple6502 : Cpu
     {
@@ -44,7 +45,8 @@ namespace NesTest
                 else
                 {
                     hasKey = false;
-                    e.Value = (byte)Console.ReadKey(true).KeyChar;
+                    var c = char.ToUpperInvariant(Console.ReadKey(true).KeyChar);
+                        e.Value = (byte)c;
                 }
             });
         }

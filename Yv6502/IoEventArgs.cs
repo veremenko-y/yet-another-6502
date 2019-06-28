@@ -1,6 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 
-namespace NesTest
+namespace Yv6502
 {
     public struct IoEventArgs
     {

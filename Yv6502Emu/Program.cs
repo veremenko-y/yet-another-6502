@@ -2,17 +2,24 @@
 using System.Diagnostics;
 using System.IO;
 
-namespace NesTest
+namespace Yv6502Emu
 {
     internal static class Program
     {
         private static void Main(string[] args)
         {
-            var argsParser = new Options("Yv.Cpu.Most6502");
-            argsParser.AddOption(new[] { "m", "machine" }, values: new[] { "test", "grants" }, description: "Machine name to be run");
+            var argsParser = new Options("yv6502emu");
+            argsParser.AddOption(
+                new[] { "m", "machine" },
+                allowedValues: new[] { "test", "grants" },
+                description: "Machine name to be run",
+                required: true);
+            argsParser.AddOperand(
+                description: "Path to the ROM file",
+                required: true);
             if (!argsParser.Parse(args))
                 return;
-            var machine = argsParser.Get("m");
+            var machine = argsParser.GetOption("m");
             if (machine == "grants")
             {
                 var rom = File.ReadAllBytes(@"..\..\osi_bas.bin");

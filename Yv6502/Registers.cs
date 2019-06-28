@@ -2,7 +2,7 @@
 using System.Net.NetworkInformation;
 using System.Runtime.CompilerServices;
 
-namespace NesTest
+namespace Yv6502
 {
     public struct Registers
     {

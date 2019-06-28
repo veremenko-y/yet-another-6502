@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace NesTest
+namespace Yv6502
 {
     public partial class Cpu
     {
