@@ -5,9 +5,6 @@ namespace Yv6502Emu
 {
     public class GrantsSimple6502 : Cpu
     {
-        private char inputKey;
-        private bool hasKey;
-
         public GrantsSimple6502(byte[] rom)
         {
             var ram = new byte[0x8000];
@@ -44,9 +41,8 @@ namespace Yv6502Emu
                 }
                 else
                 {
-                    hasKey = false;
                     var c = char.ToUpperInvariant(Console.ReadKey(true).KeyChar);
-                        e.Value = (byte)c;
+                    e.Value = (byte)c;
                 }
             });
         }
